@@ -28,7 +28,7 @@ def is_step_correct(w, a: float, b: float, eps: float, derivative_max: float, de
     arg_max = arg_max_dichotomy(w, a, b, eps)
     factorial = math.factorial(derivative_order)
     # (derivative_max / factorial) *
-    expression =  (derivative_max / factorial) *w(arg_max)
+    expression = (derivative_max / factorial) * w(arg_max)
     return expression < eps
 
 
@@ -100,7 +100,7 @@ def build_partition(f, a: float, b: float, eps: float, derivative_max: float, de
 
 # newton interpolation polynomial with finite differences forward
 def build_newton_interpol_polynom(f, arg_partition: iter):
-    f_val = [f(arg_val)for  arg_val in arg_partition]
+    f_val = [f(arg_val) for arg_val in arg_partition]
     # for  arg_val in arg_partition:
     #     if abs(arg_val) < np.finfo(float).eps:
     #         f_val.append(f(10 ** -6))
@@ -174,7 +174,7 @@ def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", co
     pylab.grid(True)
     # pylab.xlim(a - 1, b + 1)
     pylab.title(title)
-
+    # print(2,3, -5,-4, -1, 0)
     pylab.plot(x_values, func_val, label=label, color=color)
     pylab.plot([a - 1, b + 1], [0, 0], color="black")
 
@@ -182,7 +182,7 @@ def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", co
 
 
 if __name__ == '__main__':
-    a = -1
+    a = 0.1
     b = 1
     derivative_max = 3064
     derivative_order = 4
@@ -195,21 +195,34 @@ if __name__ == '__main__':
     info = "f := π * sin(8 * x) / x + x ** 2"
     draw(f, a, b, eps, title=info, label="variant 10", color="blue")
 
-
     res = build_partition(f, a, b, eps, derivative_max, derivative_order)
-    print(" step, iter, partitions: ", res)
+    print("(len), step, iter, partitions: ", len(res[2]), res)
     partitions = res[2]
 
-    step = (b - a)/31
-    print("another step",step)
-    partit = [a + i * step for i in range(int((b - a) / step))]
-    print(partit)
-    P = build_newton_interpol_polynom(f, arg_partition=partit)
-    p_val = [P(x) for x in partit]
-    print("p_val ", p_val)
-    draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
-    pylab.ylim(-10,100)
+    # step = (b - a)/31
+    # print("another step",step)
+    # partit = [a + i * step for i in range(int((b - a) / step))]
+    # print(partit)
+    P = build_newton_interpol_polynom(f, arg_partition=partitions)
+    # p_val = [P(x) for x in partit]
+    # print("p_val ", p_val)
 
+    pylab.figure(2)
+    draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
+    # pylab.ylim(-10,100)
+
+    pylab.figure(3)
+
+    draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
+    draw(f, a, b, eps, title=info, label="variant 10", color="blue")
+
+
+    def acuracy(x: float) -> float:
+        return abs(f(x) - P(x))
+
+
+    pylab.figure(4)
+    draw(acuracy, a, b, eps, title=info, label="Accuracy", color="purple")
 
     f_4th_diff = lambda x: 2 * np.pi * (
             -256 * np.cos(8 * x) -
@@ -218,9 +231,9 @@ if __name__ == '__main__':
             96 * np.sin(8 * x) / x
     ) / x
 
-    pylab.figure(2)
-    info = "f_4th_diff:= 2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
-    draw(f_4th_diff, -5, 5, 10 ** -5, title=info)
-    pylab.ylim((-100, 3200))
+    # pylab.figure(5)
+    # info = "f_4th_diff:= \n2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+\n+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
+    # draw(f_4th_diff, -5, 5, 10 ** -5, title=info,label="Wow")
+    # pylab.ylim((-100, 3200))
 
     pylab.show()
