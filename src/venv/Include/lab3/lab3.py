@@ -27,8 +27,8 @@ def is_step_correct(w, a: float, b: float, eps: float, derivative_max: float, de
     """
     arg_max = arg_max_dichotomy(w, a, b, eps)
     factorial = math.factorial(derivative_order)
-
-    expression = (derivative_max / factorial) * w(arg_max)
+    # (derivative_max / factorial) *
+    expression =  (derivative_max / factorial) *w(arg_max)
     return expression < eps
 
 
@@ -100,7 +100,12 @@ def build_partition(f, a: float, b: float, eps: float, derivative_max: float, de
 
 # newton interpolation polynomial with finite differences forward
 def build_newton_interpol_polynom(f, arg_partition: iter):
-    f_val = [f(arg_val) for arg_val in arg_partition]
+    f_val = [f(arg_val)for  arg_val in arg_partition]
+    # for  arg_val in arg_partition:
+    #     if abs(arg_val) < np.finfo(float).eps:
+    #         f_val.append(f(10 ** -6))
+    #     f_val.append(f(arg_val))
+
     finit_diff = [f_val]
     # строим списоки конечных расностей
     for i in range(len(arg_partition) - 1):
@@ -179,34 +184,43 @@ def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", co
 if __name__ == '__main__':
     a = -1
     b = 1
-    derivative_max = 3200
+    derivative_max = 3064
     derivative_order = 4
     # a = float(input("Enter a:"))
     # b = float(input("Enter b:"))
     f = lambda x: np.pi * np.sin(8 * x) / x + x ** 2
-    f_4th_diff = lambda x: 2 * np.pi * (
-            -256 * np.cos(8 * x) -
-            (3 * np.sin(8 * x)) / (x ** 3) +
-            (24 * np.cos(8 * x)) / (x ** 2) +
-            96 * np.sin(8 * x) / x
-    ) / x
     eps = 10 ** -4
 
     pylab.figure(1)
     info = "f := π * sin(8 * x) / x + x ** 2"
     draw(f, a, b, eps, title=info, label="variant 10", color="blue")
 
-    # pylab.figure(2)
-    # info = "f_4th_diff:= 2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
-    # draw(f_4th_diff, -0.5, 1, 10 ** -6, title=info)
-    # pylab.ylim((-100, 3200))
 
-    # draw(f, a, b, 10 ** -1 / 2, title=info, label="variant 10", color="red")
     res = build_partition(f, a, b, eps, derivative_max, derivative_order)
-    print("partitions, step, iter: ", res)
+    print(" step, iter, partitions: ", res)
     partitions = res[2]
 
-    P = build_newton_interpol_polynom(f, arg_partition=partitions)
-
+    step = (b - a)/31
+    print("another step",step)
+    partit = [a + i * step for i in range(int((b - a) / step))]
+    print(partit)
+    P = build_newton_interpol_polynom(f, arg_partition=partit)
+    p_val = [P(x) for x in partit]
+    print("p_val ", p_val)
     draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
+    pylab.ylim(-10,100)
+
+
+    f_4th_diff = lambda x: 2 * np.pi * (
+            -256 * np.cos(8 * x) -
+            (3 * np.sin(8 * x)) / (x ** 3) +
+            (24 * np.cos(8 * x)) / (x ** 2) +
+            96 * np.sin(8 * x) / x
+    ) / x
+
+    pylab.figure(2)
+    info = "f_4th_diff:= 2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
+    draw(f_4th_diff, -5, 5, 10 ** -5, title=info)
+    pylab.ylim((-100, 3200))
+
     pylab.show()
