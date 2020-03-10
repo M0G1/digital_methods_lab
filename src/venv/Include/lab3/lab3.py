@@ -156,15 +156,6 @@ def get_w(x_val: (list, iter)):
     return w
 
 
-def calc_Lagrange_coef(x_val: (list, iter), j: int) -> float:
-    ans = 1
-    for k, x_k in enumerate(x_val):
-        if k != j:
-            ans = ans * (x_val[j] - x_k)
-
-    return 1 / ans
-
-
 def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", color="black"):
     x_values = np.arange(start=a, stop=b, step=eps)
     func_val = f(x_values)
