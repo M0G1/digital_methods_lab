@@ -40,6 +40,17 @@ def check_condition(w, a: float, b: float, eps: float, derivative_max: float, de
 
 
 def build_partition(f, a: float, b: float, eps: float, derivative_max: float, derivative_order: int) -> iter:
+    """
+
+    :param f:
+    :param a:
+    :param b:
+    :param eps:
+    :param derivative_max:
+    :param derivative_order:
+    :return:
+    разбивает отрезок по которому можно построить итерполяцию
+    """
     n = derivative_order
     # создаем начальный шаг
     step = (b - a) / (n - 1)
@@ -106,6 +117,19 @@ def build_partition(f, a: float, b: float, eps: float, derivative_max: float, de
 
 
 def get_border(f_4, a: float, b: float, derr_ord: int, eps: float, left_step: float, right_step: float):
+    """
+
+    :param f_4:
+    :param a:
+    :param b:
+    :param derr_ord:
+    :param eps:
+    :param left_step: сдвиг левой границы на итерации
+    :param right_step: сдвиг правой границы на итерации
+    :return:
+    ищем отрезок на котором выполняется условия по точности при интерполяции полиномом лагранжа
+
+    """
     # елси слишком большая то сдвигаем границы на шаг
     while b > a:
         step = (b - a) / 3
