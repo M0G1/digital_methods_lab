@@ -1,6 +1,7 @@
 import numpy as np
 import pylab
 import math
+import time
 
 
 def arg_max_dichotomy(f, a: float, b: float, eps: float) -> float:
@@ -15,7 +16,7 @@ def arg_max_dichotomy(f, a: float, b: float, eps: float) -> float:
     return (a + b) / 2
 
 
-def is_step_correct(w, a: float, b: float, eps: float, derivative_max: float, derivative_order: int) -> bool:
+def check_condition(w, a: float, b: float, eps: float, derivative_max: float, derivative_order: int) -> iter:
     """
     :param w: Lagrange polynomial without coefficients
     :param a: left border
@@ -25,11 +26,17 @@ def is_step_correct(w, a: float, b: float, eps: float, derivative_max: float, de
     :param derivative_order: derivative order
     :return: boolean value of condition on accuracy: |f(x) - P(x)| <=  M_n+1 / (n+1)! * max(w(x))
     """
-    arg_max = arg_max_dichotomy(w, a, b, eps)
+    # arg_max = arg_max_dichotomy(w, a, b, eps)
+    c = [w(x) for x in np.arange(a, b, 10 ** -2)]
+    # print(c)
+    maximum = np.max(c)
     factorial = math.factorial(derivative_order)
     # (derivative_max / factorial) *
-    expression = (derivative_max / factorial) * w(arg_max)
-    return expression < eps
+    expression = (derivative_max / factorial) * maximum
+
+    # print("max", maximum)
+    # print("expres", expression)
+    return (expression < eps, expression)
 
 
 def build_partition(f, a: float, b: float, eps: float, derivative_max: float, derivative_order: int) -> iter:
@@ -60,7 +67,7 @@ def build_partition(f, a: float, b: float, eps: float, derivative_max: float, de
             # получаем функцию для разбиения
             w = get_w(x_val_i)
             l = len(x_val_i)
-            if not is_step_correct(w, x_val_i[0], x_val_i[l - 1], eps, derivative_max, n):
+            if not (check_condition(w, x_val_i[0], x_val_i[l - 1], eps, derivative_max, n))[0]:
                 is_break = True
                 break
 
@@ -98,7 +105,25 @@ def build_partition(f, a: float, b: float, eps: float, derivative_max: float, de
     return (step, num_iter, x_val)
 
 
-# newton interpolation polynomial with finite differences forward
+def get_border(f_4, a: float, b: float, derr_ord: int, eps: float, left_step: float, right_step: float):
+    # елси слишком большая то сдвигаем границы на шаг
+    while b > a:
+        step = (b - a) / 3
+        partit = [a + i * (b - a) / 3 for i in range(4)]
+        # print(partit)
+        partit_for_max = np.arange(a, b, step=10 ** -2)
+        maximum = np.max([abs(f_4(x)) for x in partit_for_max])
+        w = get_w(partit)
+
+        if not (check_condition(w, a, b, eps, maximum, derr_ord))[0]:
+            a = a + left_step
+            b = b - right_step
+        else:
+            break
+    return (a, b, step)
+    # newton interpolation polynomial with finite differences forward
+
+
 def build_newton_interpol_polynom(f, arg_partition: iter):
     f_val = [f(arg_val) for arg_val in arg_partition]
     # for  arg_val in arg_partition:
@@ -112,11 +137,16 @@ def build_newton_interpol_polynom(f, arg_partition: iter):
         finit_diff_ord_i = []
         # находим текущий список конечных разностей
         for j in range(len(finit_diff[i]) - 1):
-            finit_diff_ord_i.append(finit_diff[i][j + 1] - finit_diff[i][j])
+            finit_diff_ord_i.append((finit_diff[i][j + 1] - finit_diff[i][j]))
         # добавляем
         finit_diff.append(finit_diff_ord_i)
         del finit_diff_ord_i
 
+    print()
+    print("\tfor newton func val ", f_val)
+    for i in range(len(finit_diff)):
+        print("\tfor newton subs %d" % (i + 1), finit_diff[i])
+    print()
     # собираем все первые конечные разности
     # данные что будут использовать в функции
     delta_y_val = [finit_diff[i][0] for i in range(len(finit_diff))]
@@ -137,9 +167,7 @@ def build_newton_interpol_polynom(f, arg_partition: iter):
         for k in range(1, len(delta_y_val)):
             factorial = factorial * k
             factor_t = factor_t * t
-
             ans = ans + (delta_y_val[k] / factorial) * factor_t
-
             t = t - 1
         return ans
 
@@ -156,10 +184,68 @@ def get_w(x_val: (list, iter)):
     return w
 
 
-def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", color="black"):
-    x_values = np.arange(start=a, stop=b, step=eps)
-    func_val = f(x_values)
+def calc_Lagrange_coef(x_val: (list, iter), j: int) -> float:
+    ans = 1
+    for k, x_k in enumerate(x_val):
+        if k != j:
+            ans = ans * (x_val[j] - x_k)
 
+    return 1 / ans
+
+
+def w_Lagrange(x: float, x_val: (list, iter), j: int) -> float:
+    ans = 1
+    for k, x_k in enumerate(x_val):
+        if k != j:
+            ans = ans * (x - x_k)
+    return ans
+
+
+def build_Lagrange(f, n: int, x_val: (list, iter)):
+    n = n + 1
+
+    def func(x: float) -> float:
+        y_val = [f(x_k) for x_k in x_val]
+        # находим промежуток где лежит точка
+        # pos = 0
+        # for k, x_k in enumerate(x_val):
+        #     if x >= x_k:
+        #         pos = k
+        #         break
+
+        # on_left = None
+        # on_right = None
+        #
+        # if pos < n//2:
+        #     on_left = 0
+        # else:
+        #     on_left = pos - n //2
+        #
+        # on_right = on_left + n
+        # if on_right > len(x_val):
+        #     on_left = on_right - n
+        #     on_right = len(x_val)
+
+        # sub_arr_x = x_val[on_left:on_right]
+
+        sub_arr_x = x_val
+        # print(sub_arr_x)
+        sub_arr_y = [
+            y_k * calc_Lagrange_coef(sub_arr_x, k)
+            for k, y_k in enumerate(y_val)
+        ]
+
+        w_val = [w_Lagrange(x, sub_arr_x, i) for i in range(len(sub_arr_x))]
+        ans = float(np.matmul(w_val, sub_arr_y))
+        return ans
+
+    return func
+
+
+def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", color="black"):
+    x_values = list(np.arange(start=a, stop=b, step=eps))
+    func_val = [f(x) for x in x_values]
+    print(label, " ", func_val)
     pylab.ylabel("y")
     pylab.xlabel("x")
     pylab.grid(True)
@@ -167,53 +253,69 @@ def draw(f, a: float, b: float, eps: float, title: str = "", label: str = "", co
     pylab.title(title)
     # print(2,3, -5,-4, -1, 0)
     pylab.plot(x_values, func_val, label=label, color=color)
-    pylab.plot([a - 1, b + 1], [0, 0], color="black")
+    # pylab.plot([a - 1, b + 1], [0, 0], color="black")
 
     pylab.legend()
 
 
 if __name__ == '__main__':
-    a = 0.1
-    b = 1
-    derivative_max = 3064
+    begin = time.time()
+    a = 10 ** -3
+    b = 2
+    derivative_max = 21000
     derivative_order = 4
     # a = float(input("Enter a:"))
     # b = float(input("Enter b:"))
     f = lambda x: np.pi * np.sin(8 * x) / x + x ** 2
     eps = 10 ** -4
 
-    pylab.figure(1)
-    info = "f := π * sin(8 * x) / x + x ** 2"
-    draw(f, a, b, eps, title=info, label="variant 10", color="blue")
-
+    # Строим разбиение по условию
     res = build_partition(f, a, b, eps, derivative_max, derivative_order)
-    print("(len), step, iter, partitions: ", len(res[2]), res)
+    # print("(len), step, iter, partitions: ", len(res[2]), res)
     partitions = res[2]
 
-    # step = (b - a)/31
-    # print("another step",step)
-    # partit = [a + i * step for i in range(int((b - a) / step))]
-    # print(partit)
-    P = build_newton_interpol_polynom(f, arg_partition=partitions)
-    # p_val = [P(x) for x in partit]
-    # print("p_val ", p_val)
-
-    pylab.figure(2)
-    draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
-    # pylab.ylim(-10,100)
+    # Строим разбиение сами
 
     pylab.figure(3)
 
-    draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
-    draw(f, a, b, eps, title=info, label="variant 10", color="blue")
+    # draw(P, a - 0.01, b + 0.01, 10 ** -3, label="newton interpol", color="red")
+
+    info = "f := π * sin(8 * x) / x + x ** 2"
+
+    arr = [a, (a + b) / 3, 2 * (a + b) / 3, b]
+    print(check_condition(get_w(arr), a, b, 10 ** -1, derivative_max, derivative_order))
+    draw(f, a, b, 10 ** -2, label="variant 10", color="blue")
+
+    a = 0.5
+    b = 0.6
+    step = (b - a) / 3
+    print("another step", step)
+    partit = [a + i * step for i in range(4)]
+    print("partit", partit)
+
+    P = build_newton_interpol_polynom(f, arg_partition=partit)
+    #
+    # step = (b - a) / 4
+    # partit = [a + i * step for i in range(int((b - a) / step) + 1)]
+    # print(arr)
+    L_f = build_Lagrange(f, 3, partit)
+
+    draw(P, a, b, 10 ** -2, label="newton interpol", color="red")
+    draw(L_f, a, b, 10 ** -2, title=info, label="Lagrange", color="green")
 
 
-    def acuracy(x: float) -> float:
+    def error_func_newton(x: float) -> float:
         return abs(f(x) - P(x))
 
 
+    def error_func_lagrange(x: float) -> float:
+        return abs(f(x) - L_f(x))
+
+
     pylab.figure(4)
-    draw(acuracy, a, b, eps, title=info, label="Accuracy", color="purple")
+    info = "ERROR"
+    draw(error_func_newton, a, b, 10 ** -4, title=info, label="error_func_newton", color="purple")
+    draw(error_func_lagrange, a, b, 10 ** -3, title=info, label="error_func_lagrange", color="orange")
 
     f_4th_diff = lambda x: 2 * np.pi * (
             -256 * np.cos(8 * x) -
@@ -222,9 +324,29 @@ if __name__ == '__main__':
             96 * np.sin(8 * x) / x
     ) / x
 
-    # pylab.figure(5)
-    # info = "f_4th_diff:= \n2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+\n+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
-    # draw(f_4th_diff, -5, 5, 10 ** -5, title=info,label="Wow")
-    # pylab.ylim((-100, 3200))
+    f_4th_diff2 = lambda x: 8 * np.pi * (
+            512 * np.sin(8 * x) -
+            96 * np.sin(8 * x) / x ** 2 -
+            24 * np.cos(8 * x) / x ** 3 +
+            3 * np.sin(8 * x) / x ** 4 +
+            256 * np.cos(8 * x) / x) / x
+
+    pylab.figure(5)
+    info = "f_4th_diff:= \n2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+\n+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
+    draw(f_4th_diff2, -1, 4, 10 ** -3, title=info, label="Wow")
+    pylab.ylim(-100,21000)
+    # pylab.figure(6)
 
     pylab.show()
+
+    print("End graf\n")
+    res = get_border(f_4th_diff2, a, b, 4, 10 ** -3, 0.1, 0.1)
+    print(res)
+    res = get_border(f_4th_diff2, a, b, 4, 10 ** -3, 0.001, 0.001)
+    print(res)
+
+    print()
+    x = float(input("Enter x: "))
+    print("funct value  = ", f(x))
+    print("newton value =", P(x))
+    print("Lagran value =", L_f(x))
