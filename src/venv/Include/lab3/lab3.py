@@ -120,8 +120,8 @@ def get_border(f_4, a: float, b: float, derr_ord: int, eps: float, left_step: fl
     """
 
     :param f_4:
-    :param a:
-    :param b:
+    :param a: начальный левый конец
+    :param b: изначальный правый конец
     :param derr_ord:
     :param eps:
     :param left_step: сдвиг левой границы на итерации
@@ -136,6 +136,7 @@ def get_border(f_4, a: float, b: float, derr_ord: int, eps: float, left_step: fl
         partit = [a + i * (b - a) / 3 for i in range(4)]
         # print(partit)
         partit_for_max = np.arange(a, b, step=10 ** -2)
+        # максимум 4-й производной
         maximum = np.max([abs(f_4(x)) for x in partit_for_max])
         w = get_w(partit)
 
@@ -356,7 +357,7 @@ if __name__ == '__main__':
             256 * np.cos(8 * x) / x) / x
 
     pylab.figure(5)
-    info = "f_4th_diff:= \n2*​π*​((‑256)*​cos(​8*​x)-​3*​sin(​8*​x)/​x^​3+\n+​24*​cos(​8*​x)/​x^​2+​96*​sin(​8*​x)/​x)/​x"
+    info = "f_4th_diff:= \n8 * pi * (512 * sin(8 * x) -96 * sin(8 * x) / x ** 2 \n-24 * cos(8 * x) / x ** 3 +\n3 * sin(8 * x) / x ** 4 +256 * cos(8 * x) / x) / x"
     draw(f_4th_diff2, -1, 4, 10 ** -3, title=info, label="Wow")
     pylab.ylim(-100,21000)
     # pylab.figure(6)
@@ -374,3 +375,4 @@ if __name__ == '__main__':
     print("funct value  = ", f(x))
     print("newton value =", P(x))
     print("Lagran value =", L_f(x))
+# 8 * pi * (512 * sin(8 * x) -96 * sin(8 * x) / x ** 2 -24 * cos(8 * x) / x ** 3 +3 * sin(8 * x) / x ** 4 +256 * cos(8 * x) / x) / x
