@@ -19,7 +19,7 @@ def get_max(f_, a: float, b: float, step: float = 10 ** -5) -> float:
 
 def correct_step(h: float, a, b):
     # округление в большую сторону
-    count_points = math.ceil((b - a) / h)
+    count_points = math.ceil((b - a) / h) + 1
     # нужное количество точек
     if count_points % 4 == 0:
         return h
@@ -76,14 +76,14 @@ def simpson_quadrature(y: (np.ndarray), step: float):
 def calc_integral(quad_formule_with_calc_step, a: float, b: float, eps: float, info: str = ""):
     h = quad_formule_with_calc_step[0](a, b, eps)
     n, h = correct_step(h, a, b)
-    x = [a + h * i for i in range(n + 1)]
+    x = [a + h * i for i in range(n)]
     y = f(x)
     y_2h = [y[2 * i] for i in range(y.size // 2)]
 
     print(info + "    step: " + str(h))
     print(info + " 2x step: " + str(2 * h))
-    # print("y_h  array size is " + str(len(y)))
-    # print("y_2h array size is " + str(len(y_2h)))
+    print("y_h  array size is " + str(len(y)))
+    print("y_2h array size is " + str(len(y_2h)))
     print()
 
     return (quad_formule_with_calc_step[1](y, h), quad_formule_with_calc_step[1](y_2h, 2 * h))
@@ -137,4 +137,7 @@ if __name__ == '__main__':
     else:
         print()
 
-    print("Best is " + info[index] + " with difference: " + str(min))
+    print("Best is " + info[index] + " with difference: " + str(min),"\n")
+
+    print("Runge rule for trapeze: " + str(abs(data1[0] - data1[1]) / 3))
+    print("Runge rule for Simpson: " + str(abs(data2[0] - data2[1]) / 15))
