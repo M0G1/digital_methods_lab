@@ -64,7 +64,7 @@ if __name__ == '__main__':
     x_arr = np.arange(a, b + h, h)
     y_arr_h = [y0]
     y_arr_2h = [y0]
-    delta_y = [0]
+    delta_y = []
 
     # вычисляем значения y с шагом h
     for i in range(n):
@@ -73,9 +73,9 @@ if __name__ == '__main__':
         )
 
     # вычисляем значения y с шагом 2h и находим разностью
-    for i in range(n // 2):
+    for i in range(n // 2 + 1):
         y_arr_2h.append(
-            y_arr_2h[i] + runge_kutta_4(f, x_arr[2 * i], y_arr_2h[i], h)
+            y_arr_2h[i] + runge_kutta_4(f, x_arr[2 * i], y_arr_2h[i], 2 * h)
         )
         delta_y.append(abs(y_arr_2h[i] - y_arr_h[2 * i]))
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     x_arr_e = np.arange(a, b + h, h)
     y_arr_h_e = [y0]
     y_arr_2h_e = [y0]
-    delta_y_e = [0]
+    delta_y_e = []
 
     # вычисляем значения y с шагом h
     for i in range(n):
@@ -94,11 +94,11 @@ if __name__ == '__main__':
         )
 
     # вычисляем значения y с шагом 2h и находим разностью
-    for i in range(n // 2):
+    for i in range(n // 2 + 1):
         y_arr_2h_e.append(
             y_arr_2h_e[i] + 2 * h * f(x_arr_e[2 * i], y_arr_2h_e[i])
         )
-        delta_y.append(abs(y_arr_2h_e[i] - y_arr_h_e[2 * i]))
+        delta_y_e.append(abs(y_arr_2h_e[i] - y_arr_h_e[2 * i]))
 
     max_delta_y_e = np.max(delta_y_e)
 
@@ -112,18 +112,33 @@ if __name__ == '__main__':
     max_delta_koshi_runge_kutte = np.max(delta_koshi_runge_kutte)
 
     print("Runge-Kutte\n")
-    print("x_arr   :\n" + str(x_arr))
-    print("y_arr_h : \n" + str(y_arr_h))
-    print("y_arr_2h:\n" + str(y_arr_h))
-    print("delta_y:\n" + str(y_arr_h))
     print("max_delta_y =" + str(max_delta_y))
 
-    print("Euler\n")
-    print("x_arr_e   :\n" + str(x_arr_e))
-    print("y_arr_h_e : \n" + str(y_arr_h_e))
-    print("y_arr_2h_e:\n" + str(y_arr_h_e))
-    print("delta_y_e:\n" + str(y_arr_h_e))
+    print("\n   x\t   h\t\t  2h\t delta y")
+    for i in range(len(x_arr)):
+        if i % 2 == 0:
+            print("%8.5f %8.5f %8.5f %8.5f" % (x_arr[i], y_arr_h[i], y_arr_2h[i // 2], delta_y[i // 2]))
+        else:
+            print("%8.5f %8.5f" % (x_arr[i], y_arr_h[i]))
+
+    print("\nEuler")
     print("max_delta_y_e =" + str(max_delta_y_e))
+
+
+    print("\n   x\t   h\t\t  2h\t delta y")
+    for i in range(len(x_arr)):
+        if i % 2 == 0:
+            print("%8.5f %8.5f %8.5f %8.5f" % (x_arr_e[i], y_arr_h_e[i], y_arr_2h_e[i // 2], delta_y_e[i // 2]))
+        else:
+            print("%8.5f %8.5f" % (x_arr[i], y_arr_h[i]))
+
+
+    print("\nexact solution(Koshi)")
+    print("max_delta_koshi_runge_kutte =" + str(max_delta_koshi_runge_kutte))
+
+    print("   x\t    Koshi   Runge-Kutte  delta y")
+    for i in range(len(x_arr)):
+        print("%8.6f %8.6f %8.6f    %8.6f" % (x_arr[i], y_arr_h[i], y_arr_koshi[i], delta_koshi_runge_kutte[i]))
 
     pylab.plot(np.asarray(x_arr_e), np.asarray(y_arr_h_e), label="Euler", color="g")
     pylab.plot(np.asarray(x_arr), np.asarray(y_arr_h), label="Runge-Kutte", color="b")
